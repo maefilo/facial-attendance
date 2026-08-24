@@ -246,6 +246,7 @@ async function handleRecognize() {
 async function loadStudentSelect() {
     try {
         const students = await api.listStudents();
+        students.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
         const select = document.getElementById('faceStudentSelect');
         select.innerHTML = '<option value="">Selecione um aluno...</option>' +
             students.map(s => `<option value="${s.id}">${s.name} (${s.registration_number})</option>`).join('');
@@ -322,6 +323,7 @@ async function handleRegisterFace() {
 async function loadStudents() {
     try {
         const students = await api.listStudents();
+        students.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
         const container = document.getElementById('studentsList');
         document.getElementById('studentCount').textContent = `${students.length} aluno(s)`;
 
@@ -619,6 +621,7 @@ async function loadClassStudents() {
 async function loadModalStudentSelect() {
     try {
         const students = await api.listStudents();
+        students.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
         const select = document.getElementById('modalStudentSelect');
         select.innerHTML = '<option value="">Selecione um aluno...</option>' +
             students.map(s => `<option value="${s.id}">${s.name} (${s.registration_number})</option>`).join('');

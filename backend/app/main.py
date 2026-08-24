@@ -95,7 +95,9 @@ def create_student(student: StudentCreate, db: Session = Depends(get_db)):
 
 @app.get("/students", response_model=list[StudentResponse])
 def list_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return db.query(Student).offset(skip).limit(limit).all()
+    students = db.query(Student).offset(skip).limit(limit).all()
+    students.sort(key=lambda s: s.name or "")
+    return students
 
 
 @app.get("/students/{student_id}", response_model=StudentResponse)
