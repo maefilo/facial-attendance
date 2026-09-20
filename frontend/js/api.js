@@ -78,6 +78,10 @@ const api = {
         return this.request('GET', `/attendances${query ? '?' + query : ''}`);
     },
 
+    deleteAttendance(id) {
+        return this.request('DELETE', `/attendances/${id}`);
+    },
+
     // Eklesia sync
     syncToEklesia(classId, gradeId) {
         return this.request('POST', `/eklesia/sync?class_id=${classId}&grade_id=${gradeId}`);

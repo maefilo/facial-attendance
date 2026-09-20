@@ -248,6 +248,16 @@ def list_attendances(
     return result
 
 
+@app.delete("/attendances/{attendance_id}")
+def delete_attendance(attendance_id: int, db: Session = Depends(get_db)):
+    att = db.query(Attendance).filter(Attendance.id == attendance_id).first()
+    if not att:
+        raise HTTPException(status_code=404, detail="Presença não encontrada")
+    db.delete(att)
+    db.commit()
+    return {"message": "Presença excluída com sucesso"}
+
+
 @app.get("/stats", response_model=AttendanceStats)
 def get_stats(db: Session = Depends(get_db)):
     total = db.query(Student).count()

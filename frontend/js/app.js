@@ -458,6 +458,7 @@ async function loadAttendances() {
                     ${att.status === 'present' ? 'Presente' : 'Atrasado'}
                 </span>
                 ${att.status === 'present' ? `<button class="btn btn-success btn-small" onclick="syncSingleAttendance(${att.student_id})" title="Sincronizar com Eklesia">🔄</button>` : ''}
+                <button class="btn btn-danger btn-small" onclick="deleteAttendance(${att.id}, '${att.student_name.replace(/'/g, "\\'")}')" title="Excluir presença">✕</button>
             </div>
         `).join('');
     } catch {
@@ -477,6 +478,18 @@ async function syncSingleAttendance(studentId) {
         showToast('Presença sincronizada com Eklesia!', 'success');
     } catch (err) {
         showToast(err.data?.detail || 'Erro ao sincronizar presença', 'error');
+    }
+}
+
+async function deleteAttendance(id, studentName) {
+    if (!confirm(`Excluir presença de ${studentName}?`)) return;
+
+    try {
+        await api.deleteAttendance(id);
+        showToast('Presença excluída', 'success');
+        await loadAttendances();
+    } catch {
+        showToast('Erro ao excluir presença', 'error');
     }
 }
 
