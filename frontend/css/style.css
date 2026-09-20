@@ -633,6 +633,13 @@ body {
     transform: none;
 }
 
+.btn-small {
+    padding: 4px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+    min-width: auto;
+}
+
 /* =============================================
    STUDENTS GRID
    ============================================= */

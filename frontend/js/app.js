@@ -445,6 +445,8 @@ async function loadAttendances() {
             return;
         }
 
+        attendances.sort((a, b) => a.student_name.localeCompare(b.student_name, 'pt-BR'));
+
         container.innerHTML = attendances.map(att => `
             <div class="attendance-item">
                 <div class="recent-avatar">${att.student_name.charAt(0).toUpperCase()}</div>
@@ -455,10 +457,26 @@ async function loadAttendances() {
                 <span class="recent-status status-${att.status}">
                     ${att.status === 'present' ? 'Presente' : 'Atrasado'}
                 </span>
+                ${att.status === 'present' ? `<button class="btn btn-success btn-small" onclick="syncSingleAttendance(${att.student_id})" title="Sincronizar com Eklesia">🔄</button>` : ''}
             </div>
         `).join('');
     } catch {
         showToast('Erro ao carregar presenças', 'error');
+    }
+}
+
+async function syncSingleAttendance(studentId) {
+    const gradeId = document.getElementById('attendanceGradeSelect').value;
+    if (!gradeId) {
+        showToast('Selecione o trimestre Eklesia', 'error');
+        return;
+    }
+
+    try {
+        await api.syncSingleToEklesia(studentId, parseInt(gradeId));
+        showToast('Presença sincronizada com Eklesia!', 'success');
+    } catch (err) {
+        showToast(err.data?.detail || 'Erro ao sincronizar presença', 'error');
     }
 }
 

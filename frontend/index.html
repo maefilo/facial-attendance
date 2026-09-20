@@ -461,7 +461,15 @@
                 <section class="page" id="page-attendance">
                     <div class="attendance-header">
                         <h2 class="section-title">Registro de Presenças</h2>
-                        <input type="date" id="attendanceDate" class="date-input">
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <select id="attendanceGradeSelect" class="date-input" style="width:auto;">
+                                <option value="74">1° Trimestre</option>
+                                <option value="75">2° Trimestre</option>
+                                <option value="76" selected>3° Trimestre</option>
+                                <option value="77">4° Trimestre</option>
+                            </select>
+                            <input type="date" id="attendanceDate" class="date-input">
+                        </div>
                     </div>
                     <div class="attendance-list" id="attendanceList">
                         <p class="empty-state">Nenhuma presença encontrada</p>

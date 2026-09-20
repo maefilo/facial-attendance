@@ -651,6 +651,95 @@ async def sync_to_eklesia(class_id: int, grade_id: int, db: Session = Depends(ge
     }
 
 
+@app.post("/eklesia/sync-single")
+async def sync_single_student(
+    student_id: int,
+    grade_id: int,
+    class_id: int = None,
+    db: Session = Depends(get_db),
+):
+    from .eklesia_agent import (
+        eklesia_login,
+        eklesia_get_presences,
+        eklesia_salvar_presenca,
+        eklesia_get_commitment_time,
+    )
+
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    if not student.eklesia_code:
+        raise HTTPException(status_code=400, detail="Aluno não tem código Eklesia")
+
+    if class_id:
+        db_class = db.query(Class).filter(Class.id == class_id).first()
+    else:
+        db_class = db.query(Class).join(ClassStudent).filter(
+            ClassStudent.student_id == student_id,
+            Class.eklesia_class_id.isnot(None),
+        ).first()
+
+    if not db_class:
+        raise HTTPException(status_code=404, detail="Turma não encontrada para este aluno")
+    if not db_class.eklesia_class_id:
+        raise HTTPException(status_code=400, detail="Turma não tem ID Eklesia configurado")
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    attendance = db.query(Attendance).filter(
+        Attendance.student_id == student_id,
+        Attendance.date >= today,
+        Attendance.date < datetime.now().replace(hour=23, minute=59, second=59),
+    ).first()
+
+    if not attendance or attendance.status.value != "present":
+        raise HTTPException(status_code=400, detail="Aluno não está presente hoje")
+
+    try:
+        token = await eklesia_login()
+        eklesia_presences = await eklesia_get_presences(
+            token, db_class.eklesia_class_id, grade_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao conectar no Eklesia: {str(e)}")
+
+    eklesia_map = {}
+    for pres in eklesia_presences:
+        cod_pessoa = str(pres.get("codPessoa", ""))
+        cod_turma_aluno = pres.get("codEnsinoTurmaAluno")
+        if cod_pessoa and cod_turma_aluno:
+            eklesia_map[cod_pessoa] = cod_turma_aluno
+
+    cod_pessoa = str(student.eklesia_code)
+    if cod_pessoa not in eklesia_map:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado no Eklesia para esta turma")
+
+    pessoas_payload = [{
+        "codPessoa": int(cod_pessoa),
+        "codEnsinoTurmaAluno": eklesia_map[cod_pessoa],
+    }]
+
+    try:
+        commitment_time = await eklesia_get_commitment_time(
+            token, db_class.eklesia_class_id, grade_id, today
+        )
+        await eklesia_salvar_presenca(
+            token=token,
+            turma_id=db_class.eklesia_class_id,
+            grade_id=grade_id,
+            pessoas=pessoas_payload,
+            pessoas_atuais_ids=[],
+            data=commitment_time,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao salvar no Eklesia: {str(e)}")
+
+    return {
+        "message": f"Presença de {student.name} sincronizada com sucesso",
+        "student_name": student.name,
+        "eklesia_code": cod_pessoa,
+    }
+
+
 @app.post("/eklesia/sync-students")
 async def sync_students_from_eklesia(class_id: int, db: Session = Depends(get_db)):
     from .eklesia_agent import eklesia_get_students

@@ -83,6 +83,10 @@ const api = {
         return this.request('POST', `/eklesia/sync?class_id=${classId}&grade_id=${gradeId}`);
     },
 
+    syncSingleToEklesia(studentId, gradeId) {
+        return this.request('POST', `/eklesia/sync-single?student_id=${studentId}&grade_id=${gradeId}`);
+    },
+
     syncStudentsFromEklesia(classId) {
         return this.request('POST', `/eklesia/sync-students?class_id=${classId}`);
     },
